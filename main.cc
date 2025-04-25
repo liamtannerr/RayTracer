@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vec3.h>
+#include <colour.h>
 
 int main (){
 
@@ -14,16 +16,10 @@ int main (){
         //Create a progress bar for long renders
         std::clog << "\rScanlines remaining: " << (imgHeight - j) << ' ' << std::flush;
         for(int i = 0; i < imgWidth; i++){
-
-            auto r = double(i) / (imgWidth - 1);
-            auto g = double(j) / (imgHeight - 1);
-            auto b = 1.0;
-
-            int ir = int(255.999 * r);
-            int ig = int(255.999 * g);
-            int ib = int(255.999 * b);
-
-            std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+            //Create pixel colours using vec3 class
+            auto pixel_colour = colour(double(i) / (imgWidth - 1), double(j) / (imgHeight - 1), 0);
+            //Write using colour.h
+            write_colour(std::cout, pixel_colour);
         }
     }
 
