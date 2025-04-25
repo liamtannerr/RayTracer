@@ -1,6 +1,6 @@
 #include <iostream>
-#include <vec3.h>
-#include <colour.h>
+#include "vec3.h"
+#include "colour.h"
 
 int main (){
 
@@ -17,7 +17,7 @@ int main (){
         std::clog << "\rScanlines remaining: " << (imgHeight - j) << ' ' << std::flush;
         for(int i = 0; i < imgWidth; i++){
             //Create pixel colours using vec3 class
-            auto pixel_colour = colour(double(i) / (imgWidth - 1), double(j) / (imgHeight - 1), 0);
+            auto pixel_colour = colour(double(i) / (imgWidth - 1), 0, double(j) / (imgHeight - 1));
             //Write using colour.h
             write_colour(std::cout, pixel_colour);
         }
