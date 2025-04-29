@@ -4,10 +4,24 @@
 #include "ray.h"
 
 
-colour ray_colour(const ray& r){
+bool hit_sphere(const point3& center, double radius, const ray& r) {
+    vec3 oc = center - r.origin();
+    auto a = dot(r.direction(), r.direction());
+    auto b = -2.0 * dot(r.direction(), oc);
+    auto c = dot(oc, oc) - radius*radius;
+    auto discriminant = b*b - 4*a*c;
+    return (discriminant >= 0);
+}
+
+colour ray_colour(const ray& r) {
+    if (hit_sphere(point3(0,0,-1.0), 0.5, r))
+        return colour(1, 0, 0);
+
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5*(unit_direction.y() + 1.0);
-    return (1.0-a)*colour(1.0, 1.0, 1.0) + a*colour(1.0, 0.7, 1.0);
+    auto blue = colour(0.5, 0.7, 1.0);
+    auto white = colour(1.0, 1.0, 1.0);
+    return (1.0-a)*white + a*blue;
 }
 
 int main (){
@@ -26,7 +40,7 @@ int main (){
     auto focal_length = 1.0;
     auto viewport_height = 2.0;
     //Can't just use aspect_ratio as image_width / image_height might not be exactly 16.0 / 9.0
-    auto viewport_width = viewport_height * (double(image_width / image_height));
+    auto viewport_width = viewport_height * (double(image_width) / image_height);
     auto camera_center = point3(0, 0, 0);
 
     //Calculate the vectors across the horizontal and down the vertical viewport edges.
