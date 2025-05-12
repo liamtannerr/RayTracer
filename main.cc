@@ -4,18 +4,27 @@
 #include "ray.h"
 
 
-bool hit_sphere(const point3& center, double radius, const ray& r) {
+double hit_sphere(const point3& center, double radius, const ray& r) {
     vec3 oc = center - r.origin();
     auto a = dot(r.direction(), r.direction());
     auto b = -2.0 * dot(r.direction(), oc);
     auto c = dot(oc, oc) - radius*radius;
     auto discriminant = b*b - 4*a*c;
-    return (discriminant >= 0);
+
+    if (discriminant < 0){
+        return -1.0;
+    } else {
+        return (-b - std::sqrt(discriminant) / (2.0*a));
+    }
 }
 
 colour ray_colour(const ray& r) {
-    if (hit_sphere(point3(0,0,-1.0), 0.5, r))
-        return colour(1, 0, 0);
+    auto t = hit_sphere(point3(0,0,-1), 0.5, r);
+    if (t > 0.0){
+        vec3 N = unit_vector(r.at(t) - vec3(0,0,-1));
+        std::clog << "Red: " << N.x() + 1 << " Blue: " << N.y() + 1 << " Green: " << N.z() + 1 << "\n";
+        return 0.5 * colour(N.x() + 1, N.y() + 1, N.z() + 1);
+    }
 
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5*(unit_direction.y() + 1.0);
@@ -53,7 +62,7 @@ int main (){
 
     //Calculate the location of the upper left pixel
     auto viewport_upper_left = camera_center - vec3(0, 0, focal_length) - (viewport_u + viewport_v)/2;
-    auto pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v)/2;
+    auto centre_top_left_pixel = viewport_upper_left + (pixel_delta_u + pixel_delta_v)/2;
 
     //Create header for image file
     std::cout <<"P3\n" <<image_width << ' ' << image_height << "\n255\n";
@@ -64,7 +73,7 @@ int main (){
         //Create a progress bar for long renders
         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
         for(int i = 0; i < image_width; i++){
-            auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
+            auto pixel_center = centre_top_left_pixel + (i * pixel_delta_u) + (j * pixel_delta_v);
             auto ray_direction = pixel_center - camera_center;
             ray r(camera_center, ray_direction);
 
