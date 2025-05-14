@@ -22,8 +22,8 @@ colour ray_colour(const ray& r) {
     auto t = hit_sphere(point3(0,0,-1), 0.5, r);
     if (t > 0.0){
         vec3 N = unit_vector(r.at(t) - vec3(0,0,-1));
-        std::clog << "Red: " << N.x() + 1 << " Blue: " << N.y() + 1 << " Green: " << N.z() + 1 << "\n";
-        return 0.5 * colour(N.x() + 1, N.y() + 1, N.z() + 1);
+        std::clog << "\033[32mRed: " << N.x() + 1 << " Green: " << 0 << " Blue: " << N.y() + 1 << "\033[0m\n";        
+        return 0.5 * colour(N.x() + 1, 0, N.y() + 1);
     }
 
     vec3 unit_direction = unit_vector(r.direction());
@@ -71,13 +71,14 @@ int main (){
     //Fill the image row by row
     for(int j = 0; j < image_height; j++){
         //Create a progress bar for long renders
-        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << "\n" << std::flush;
         for(int i = 0; i < image_width; i++){
             auto pixel_center = centre_top_left_pixel + (i * pixel_delta_u) + (j * pixel_delta_v);
             auto ray_direction = pixel_center - camera_center;
             ray r(camera_center, ray_direction);
 
             colour pixel_colour = ray_colour(r);
+            //std::clog << "Red: " << pixel_colour.x() << " Blue: " << pixel_colour.y() << " Green: " << pixel_colour.z() << "\n";
             write_colour(std::cout, pixel_colour);
         }
     }
