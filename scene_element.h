@@ -1,6 +1,8 @@
 #ifndef SCENE_ELEMENT_H
 #define SCENE_ELEMENT_H
 
+#include "rtweekend.h"
+#include "interval.h"
 
 class hit_record{
     public:
@@ -19,7 +21,7 @@ class scene_element{
     public:
          virtual ~scene_element() = default;
 
-         virtual bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const = 0;
+         virtual bool hit(const ray& r, interval ray_t, hit_record& rec) const = 0;
 };
 
 

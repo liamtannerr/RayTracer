@@ -30,5 +30,6 @@ inline double degrees_to_radians(double degrees) {
 #include "ray.h"
 #include "vec3.h"
 #include "scene_element.h"
+#include "interval.h"
 
 #endif
