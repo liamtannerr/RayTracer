@@ -1,13 +1,8 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
-#include "scene_element.h"
+#include "rtweekend.h"
 
-#include <memory>
-#include <vector>
-
-using std::make_shared;
-using std::shared_ptr;
 
 class scene_element_list : public scene_element{
 
