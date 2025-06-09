@@ -1,8 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "scene_element.h"
-#include "vec3.h"
+#include "rtweekend.h"
 
 class sphere : public scene_element {
 

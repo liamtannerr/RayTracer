@@ -1,7 +1,8 @@
-#include <iostream>
-#include "vec3.h"
-#include "colour.h"
-#include "ray.h"
+#include "rtweekend.h"
+
+#include "scene_element.h"
+#include "scene_element_list.h"
+#include "sphere.h"
 
 
 double hit_sphere(const point3& center, double radius, const ray& r) {
@@ -18,19 +19,15 @@ double hit_sphere(const point3& center, double radius, const ray& r) {
     }
 }
 
-colour ray_colour(const ray& r) {
-    auto t = hit_sphere(point3(0,0,-1), 0.5, r);
-    if (t > 0.0){
-        vec3 N = unit_vector(r.at(t) - vec3(0,0,-1));
-        std::clog << "\033[32mRed: " << N.x() + 1 << " Green: " << 0 << " Blue: " << N.y() + 1 << "\033[0m\n";        
-        return 0.5 * colour(N.x() + 1, 0, N.y() + 1);
+colour ray_colour(const ray& r, const scene_element& world) {
+    hit_record rec;
+    if (world.hit(r, 0, infinity, rec)) {
+        return 0.5 * (rec.normal + colour(1,1,1));
     }
 
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5*(unit_direction.y() + 1.0);
-    auto blue = colour(0.5, 0.7, 1.0);
-    auto white = colour(1.0, 1.0, 1.0);
-    return (1.0-a)*white + a*blue;
+    return (1.0-a)*colour(1.0, 1.0, 1.0) + a*colour(0.5, 0.7, 1.0);
 }
 
 int main (){
@@ -43,6 +40,13 @@ int main (){
     //Calculate the image height based on the aspect ratio and ensure it's at least 1
     int image_height = int(image_width / aspect_ratio);
     image_height = (image_height < 1) ? 1 : image_height;
+
+    // World
+
+    scene_element_list world;
+
+    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
+    world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
 
     //Camera
 
@@ -77,7 +81,7 @@ int main (){
             auto ray_direction = pixel_center - camera_center;
             ray r(camera_center, ray_direction);
 
-            colour pixel_colour = ray_colour(r);
+            colour pixel_colour = ray_colour(r, world);
             //std::clog << "Red: " << pixel_colour.x() << " Blue: " << pixel_colour.y() << " Green: " << pixel_colour.z() << "\n";
             write_colour(std::cout, pixel_colour);
         }

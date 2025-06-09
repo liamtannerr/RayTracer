@@ -1,7 +1,6 @@
 #ifndef SCENE_ELEMENT_H
 #define SCENE_ELEMENT_H
 
-#include "ray.h"
 
 class hit_record{
     public:
