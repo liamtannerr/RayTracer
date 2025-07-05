@@ -25,7 +25,7 @@ This technique is widely used in **visual effects**, **animation**, and **photor
 - Creating simple animations by rendering frames and stitching them together using `ffmpeg`
 
 ## Demo Animations
-
+![Screenshot 2025-07-04 at 11 57 20 PM](https://github.com/user-attachments/assets/b00b040d-20d2-4a15-b7c1-b8f6edb2ab70)
 <img width="1425" alt="Screenshot 2025-06-16 at 9 04 48 PM" src="https://github.com/user-attachments/assets/64d3e540-032c-4632-86d5-df502a2aa7a1" />
 <img width="1658" alt="Screenshot 2025-06-15 at 8 30 29 PM" src="https://github.com/user-attachments/assets/cb8ec282-40d5-4c46-86e3-873b49c7074b" />
 <img width="1658" alt="Screenshot 2025-06-15 at 8 30 17 PM" src="https://github.com/user-attachments/assets/87eba55e-5732-4ac7-ac7c-3324b6e360f9" />
