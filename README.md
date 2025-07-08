@@ -36,30 +36,37 @@ This technique is widely used in **visual effects**, **animation**, and **photor
 <img width="1557" alt="Screenshot 2025-06-08 at 8 45 45 PM" src="https://github.com/user-attachments/assets/ee4f6084-97d1-4758-a10d-e7c4040dd33b" />
 The very first render, showing a simple gradient sphere.
 
+<br>
 
 <img width="1658" alt="Screenshot 2025-06-15 at 8 30 17 PM" src="https://github.com/user-attachments/assets/87eba55e-5732-4ac7-ac7c-3324b6e360f9" />
 Adding a very large sphere to the background, mimicking a grassy hill.
 
+<br>
 
 <img width="1658" alt="Screenshot 2025-06-15 at 8 30 29 PM" src="https://github.com/user-attachments/assets/cb8ec282-40d5-4c46-86e3-873b49c7074b" />
 The first experimentation with ray reflections to create a diffuse sphere.
 
+<br>
 
 <img width="1425" alt="Screenshot 2025-06-16 at 9 04 48 PM" src="https://github.com/user-attachments/assets/64d3e540-032c-4632-86d5-df502a2aa7a1" />
 Rendering two perfect mirrors to demonstrate a new type of material: shiny metal.
 
+<br>
 
 ![Screenshot 2025-07-04 at 11 57 20 PM](https://github.com/user-attachments/assets/b00b040d-20d2-4a15-b7c1-b8f6edb2ab70)
 Adding a fuzz attribute to the metal material type, yielding a dull reflection on the rightmost sphere.
 
+<br>
 
 ![Screenshot 2025-07-05 at 1 23 58 AM](https://github.com/user-attachments/assets/3dafd770-6e2a-47c6-bab0-6e61168b52d0)
 The first experimentation with moving the camera for a bird's eye view in addition to adding glass-like, clear material.
 
+<br>
 
 ![Screenshot 2025-07-07 at 7 41 30 PM](https://github.com/user-attachments/assets/71753d7a-ed54-4f6b-878b-272969097c07)
 The Final scene encorporating all of the Ray Tracer feautures.
 
+<br>
 
 ![Screenshot 2025-07-06 at 12 31 08 AM](https://github.com/user-attachments/assets/7caa6b3d-d5ed-4c77-8b6f-eec18bcfa4f7)
 Further demonstration of the complete ray tracer by moving the camera, narrowing the field of view and focusing on the large mirrored sphere.
