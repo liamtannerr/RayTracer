@@ -32,7 +32,6 @@ This technique is widely used in **visual effects**, **animation**, and **photor
 
 ## Progression of the Project through Demo Animations
 
-
 <img width="1557" alt="Screenshot 2025-06-08 at 8 45 45 PM" src="https://github.com/user-attachments/assets/ee4f6084-97d1-4758-a10d-e7c4040dd33b" />
 The very first render, showing a simple gradient sphere.
 
@@ -53,24 +52,23 @@ Rendering two perfect mirrors to demonstrate a new type of material: shiny metal
 
 <br>
 
-![Screenshot 2025-07-04 at 11 57 20 PM](https://github.com/user-attachments/assets/b00b040d-20d2-4a15-b7c1-b8f6edb2ab70)
+<img alt="Screenshot 2025-07-04 at 11 57 20 PM" src="https://github.com/user-attachments/assets/b00b040d-20d2-4a15-b7c1-b8f6edb2ab70" />
 Adding a fuzz attribute to the metal material type, yielding a dull reflection on the rightmost sphere.
 
 <br>
 
-![Screenshot 2025-07-05 at 1 23 58 AM](https://github.com/user-attachments/assets/3dafd770-6e2a-47c6-bab0-6e61168b52d0)
+<img alt="Screenshot 2025-07-05 at 1 23 58 AM" src="https://github.com/user-attachments/assets/3dafd770-6e2a-47c6-bab0-6e61168b52d0" />
 The first experimentation with moving the camera for a bird's eye view in addition to adding glass-like, clear material.
 
 <br>
 
-![Screenshot 2025-07-07 at 7 41 30 PM](https://github.com/user-attachments/assets/71753d7a-ed54-4f6b-878b-272969097c07)
-The Final scene encorporating all of the Ray Tracer feautures.
+<img alt="Screenshot 2025-07-07 at 7 41 30 PM" src="https://github.com/user-attachments/assets/71753d7a-ed54-4f6b-878b-272969097c07" />
+The Final scene incorporating all of the Ray Tracer features.
 
 <br>
 
-![Screenshot 2025-07-06 at 12 31 08 AM](https://github.com/user-attachments/assets/7caa6b3d-d5ed-4c77-8b6f-eec18bcfa4f7)
+<img alt="Screenshot 2025-07-06 at 12 31 08 AM" src="https://github.com/user-attachments/assets/7caa6b3d-d5ed-4c77-8b6f-eec18bcfa4f7" />
 Further demonstration of the complete ray tracer by moving the camera, narrowing the field of view and focusing on the large mirrored sphere.
-
 --- 
 
 ## Tools & Technologies
