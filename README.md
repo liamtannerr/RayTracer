@@ -45,7 +45,10 @@ Rendering two perfect mirrors to demonstrate a new type of material: shiny metal
 Adding a fuzz attribute to the metal material type, yielding a dull reflection on the rightmost sphere.
 
 ![Screenshot 2025-07-05 at 1 23 58 AM](https://github.com/user-attachments/assets/3dafd770-6e2a-47c6-bab0-6e61168b52d0)
-The first experimentation with moving the camera for a bird's eye view.
+The first experimentation with moving the camera for a bird's eye view in addition to adding glass-like, clear material
+
+
+
 
 ![Screenshot 2025-07-07 at 7 41 30 PM](https://github.com/user-attachments/assets/71753d7a-ed54-4f6b-878b-272969097c07)
 The Final scene encorporating all of the Ray Tracer feautures. 
