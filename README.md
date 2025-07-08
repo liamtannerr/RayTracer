@@ -69,6 +69,7 @@ The Final scene incorporating all of the Ray Tracer features.
 
 <img alt="Screenshot 2025-07-06 at 12 31 08 AM" src="https://github.com/user-attachments/assets/7caa6b3d-d5ed-4c77-8b6f-eec18bcfa4f7" />
 Further demonstration of the complete ray tracer by moving the camera, narrowing the field of view and focusing on the large mirrored sphere.
+
 --- 
 
 ## Tools & Technologies
