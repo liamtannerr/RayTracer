@@ -20,10 +20,13 @@ selected preset.
 
 Add, select, and remove spheres; choose diffuse, metal, or glass; edit position,
 radius, color, roughness, and refraction. Adjust the camera position, target, and
-field of view, then click **Render scene**. The initial scene renders automatically.
+field of view, then click **Render scene**. The initial scene renders automatically at 320 × 180 with 8 samples to keep
+startup lightweight on free hosting.
 The progress bar follows actual C++ scanlines. Cancel stops the rendering process;
 **Download PNG** saves the last completed render, even after you edit the scene.
-For sharper results, select **1280 × 720 · High detail** and **128 · Ultra smooth**.
+For sharper results on a faster server or locally, select **1280 × 720 · High detail**
+and **128 · Ultra smooth**. On free hosting, increase quality gradually; high-detail
+renders may reach the 2-minute timeout.
 This provides four times the pixels and four times the samples of the previous maximum.
 Scenes are kept in memory in the browser and reset on page reload.
 
@@ -32,7 +35,7 @@ The web app runs the existing C++ materials, camera, and intersection code throu
 The built-in Node server serves the frontend and a streaming `/api/render` endpoint.
 
 Server-enforced limits: 160–1280 pixels wide at 16:9, 4–128 samples per pixel,
-16 editable spheres plus the ground, 8 ray bounces, a 60-second timeout, and one
+16 editable spheres plus the ground, 8 ray bounces, a 2-minute timeout, and one
 active render per server process. Requests also have a 16 KB size limit. A busy
 server asks the next user to retry. These limits bound each job; a public deployment
 should also apply per-client rate limiting at its proxy or hosting layer.
@@ -58,7 +61,7 @@ docker run --rm -p 5173:5173 ray-studio
 
 The Docker build compiles C++ in a separate stage; the runtime runs as an unprivileged
 user. Point your HTTPS proxy at port 5173, preserve the request Host header, disable
-response buffering for `/api/render`, and allow at least 65 seconds for responses.
+response buffering for `/api/render`, and allow at least 125 seconds for responses.
 No generated images or scenes are stored on the server.
 
 ## Overview

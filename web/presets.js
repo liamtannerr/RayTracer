@@ -55,7 +55,7 @@ export const presets = [
   }
 ];
 
-export function createScene(id, quality = { width: 1280, samples: 64 }) {
+export function createScene(id, quality = { width: 320, samples: 8 }) {
   const preset = presets.find(preset => preset.id === id) || presets[0];
   return structuredClone({ width: quality.width, samples: quality.samples, ground: preset.ground, camera: preset.camera, spheres: preset.spheres });
 }
