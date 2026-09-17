@@ -29,7 +29,7 @@ const server = http.createServer(async (req, res) => {
     active = child;
     const chunks = [];
     let size = 0, errorMessage = '', progressBuffer = '';
-    const timer = setTimeout(() => { errorMessage = 'Render reached the 60-second limit. Try fewer samples or a smaller image.'; child.kill('SIGKILL'); }, LIMITS.timeoutMs);
+    const timer = setTimeout(() => { errorMessage = 'Render reached the 2-minute limit. Try fewer samples or a smaller image.'; child.kill('SIGKILL'); }, LIMITS.timeoutMs);
     res.on('close', () => { if (!res.writableEnded) child.kill('SIGKILL'); });
     child.stdout.on('data', chunk => {
       size += chunk.length;

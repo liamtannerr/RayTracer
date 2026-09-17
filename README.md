@@ -20,8 +20,7 @@ selected preset.
 
 Add, select, and remove spheres; choose diffuse, metal, or glass; edit position,
 radius, color, roughness, and refraction. Adjust the camera position, target, and
-field of view, then click **Render scene**. The initial scene renders automatically at 320 × 180 with 8 samples to keep
-startup lightweight on free hosting.
+field of view, then click **Render scene**. The initial scene renders automatically at 640 × 360 with 16 samples (Balanced).
 The progress bar follows actual C++ scanlines. Cancel stops the rendering process;
 **Download PNG** saves the last completed render, even after you edit the scene.
 For sharper results on a faster server or locally, select **1280 × 720 · High detail**
