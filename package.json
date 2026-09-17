@@ -1,0 +1,13 @@
+{
+  "name": "ray-tracer-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && node --watch server/index.mjs",
+    "start": "npm run build && node server/index.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  }
+}

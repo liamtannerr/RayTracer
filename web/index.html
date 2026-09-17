@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#141716"><title>Ray Studio · Scene editor</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><a class="brand" href="/" aria-label="Ray Studio home"><span class="brand-icon">◒</span> RAY<span class="brand-light">STUDIO</span></a><span class="header-note">A little project by Liam Tanner.</span><span class="engine"><i></i> C++ PATH TRACER</span></header>
+<main>
+  <section class="intro"><div><div class="eyebrow">THE SCENE LAB</div><h1>Make something <em>reflect.</em></h1><p>Arrange a few spheres. Find your angle. Let the light do its thing.</p></div><button id="reset" class="quiet">↺ Reset scene</button></section>
+  <section class="starting-scenes" aria-labelledby="starting-title">
+    <div class="section-title"><h2 id="starting-title">Pick a starting scene</h2><span class="muted">Replaces your objects and camera. Then hit Render scene.</span></div>
+    <div id="presets" class="preset-grid"></div>
+  </section>
+  <div class="workspace">
+    <aside class="panel objects"><div class="section-title"><h2>Scene objects <span id="count" class="count"></span></h2><button id="add" class="small" aria-label="Add sphere">+ Add sphere</button></div><div id="object-list" class="object-list"></div><div id="inspector"></div><div class="ground"><label for="ground">Ground color <span>A matte surface beneath your scene</span></label><input id="ground" type="color" value="#8b9380"></div></aside>
+    <section class="stage-area">
+      <div class="panel preview-panel"><div class="preview-toolbar"><span><i class="tiny-dot"></i> RENDER VIEW</span><span id="dimensions">320 × 180</span></div><div class="canvas-wrap"><canvas id="canvas" width="320" height="180" aria-label="Rendered scene of spheres"></canvas><div id="empty">Your scene is waiting for a little light.</div><span class="viewport-label">PERSPECTIVE / 16:9</span></div><div class="render-status"><div><span id="status" role="status" aria-live="polite">Ready to render</span><span id="details">Your scene, traced one ray at a time.</span></div><a id="download" class="quiet disabled" aria-disabled="true" download="ray-studio.png">↓ Download PNG</a></div><div class="progress-track"><div id="progress"></div></div></div>
+      <div class="settings-grid"><section class="panel settings"><div class="section-title"><h2>Camera</h2><span class="muted">Find your perspective</span></div><div class="vector-row"><span>Position</span><div id="camera-from" class="xyz"></div></div><div class="vector-row"><span>Look at</span><div id="camera-at" class="xyz"></div></div><label class="range-label" for="fov">Field of view <output id="fov-value">40°</output></label><input id="fov" type="range" min="15" max="90" value="40"></section>
+      <section class="panel settings"><div class="section-title"><h2>Render settings</h2><span class="tag">KEEP IT LIGHT</span></div><div class="select-grid"><label>Resolution<select id="width"><option value="160">160 × 90 · Tiny</option><option value="320" selected>320 × 180 · Quick</option><option value="480">480 × 270 · Balanced</option><option value="640">640 × 360 · Detailed</option><option value="1280">1280 × 720 · High detail</option></select></label><label>Samples per pixel<select id="samples"><option value="4">4 · Draft</option><option value="8">8 · Quick</option><option value="16" selected>16 · Balanced</option><option value="32">32 · Smooth</option><option value="64">64 · Fine</option><option value="128">128 · Ultra smooth</option></select></label></div><p class="limit-note">For a sharper image, try 1280 × 720 with 128 samples. More pixels add detail; more samples reduce grain. Renders are capped at 60 seconds.</p><div class="render-actions"><button id="render" class="primary">Render scene <span>↗</span></button><button id="cancel" class="quiet" hidden>Cancel</button></div></section></div>
+    </section>
+  </div>
+  <footer><span>A project by Liam Tanner.</span><span>Diffuse · Metal · Glass <span class="footer-star">✳</span></span></footer>
+</main><script type="module" src="/app.js"></script>
+</body></html>

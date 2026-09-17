@@ -1,0 +1,9 @@
+.git
+node_modules
+build
+Images
+*.ppm
+src/*.ppm
+image
+src/image
+.DS_Store
