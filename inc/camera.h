@@ -36,6 +36,8 @@ class camera {
                 }
                 write_colour(std::cout, pixel_samples_scale * pixel_color);
             }
+            // Make each completed scanline available to streaming consumers.
+            std::cout.flush();
         }
 
         std::clog << "\rDone.                 \n";

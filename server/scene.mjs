@@ -1,4 +1,4 @@
-export const LIMITS = Object.freeze({ maxWidth: 1280, maxSamples: 128, maxSpheres: 16, maxDepth: 8, timeoutMs: 120000 });
+export const LIMITS = Object.freeze({ maxWidth: 1280, maxSamples: 128, maxSpheres: 16, maxDepth: 8, timeoutMs: 300000 });
 function number(value, min, max, label) {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label} must be between ${min} and ${max}.`);
   return value;

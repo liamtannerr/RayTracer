@@ -95,19 +95,29 @@ for (const preset of presets) {
 $('reset').onclick = () => loadPreset(activePreset);
 $('cancel').onclick = () => controller?.abort();
 $('render').onclick = render;
-async function displayImage(result) {
-  const canvas = $('canvas'); canvas.width = result.width; canvas.height = result.height;
+function startImage(width, height) {
+  const canvas = $('canvas'); canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
-  const rgb = atob(result.pixels), data = ctx.createImageData(result.width, result.height);
-  for (let i = 0, p = 0; i < rgb.length; i += 3, p += 4) { data.data[p] = rgb.charCodeAt(i); data.data[p + 1] = rgb.charCodeAt(i + 1); data.data[p + 2] = rgb.charCodeAt(i + 2); data.data[p + 3] = 255; }
-  ctx.putImageData(data, 0, 0);
+  ctx.fillStyle = '#101410'; ctx.fillRect(0, 0, width, height);
   $('empty').hidden = true; canvas.parentElement.classList.add('has-image');
+  $('dimensions').textContent = `${width} × ${height}`;
+  $('download').textContent = imageUrl ? '↓ Download previous PNG' : '↓ Download PNG';
+}
+function displayRow(message, width) {
+  const rgb = atob(message.pixels);
+  if (rgb.length !== width * 3) throw new Error('Received an incomplete image row.');
+  const ctx = $('canvas').getContext('2d'), data = ctx.createImageData(width, 1);
+  for (let i = 0, p = 0; i < rgb.length; i += 3, p += 4) { data.data[p] = rgb.charCodeAt(i); data.data[p + 1] = rgb.charCodeAt(i + 1); data.data[p + 2] = rgb.charCodeAt(i + 2); data.data[p + 3] = 255; }
+  ctx.putImageData(data, 0, message.row);
+}
+async function finishImage() {
+  const canvas = $('canvas');
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Could not create the PNG download.');
   if (imageUrl) URL.revokeObjectURL(imageUrl);
   imageUrl = URL.createObjectURL(blob); $('download').href = imageUrl;
   $('download').classList.remove('disabled'); $('download').setAttribute('aria-disabled', 'false');
-  $('dimensions').textContent = `${result.width} × ${result.height}`;
+  $('download').textContent = '↓ Download PNG';
 }
 async function render() {
   if (controller) return;
@@ -118,7 +128,7 @@ async function render() {
   $('render').disabled = true; $('cancel').hidden = false;
   $('status').classList.remove('error'); $('status').textContent = 'Tracing rays…';
   $('details').textContent = 'You can keep editing while this scene renders.'; $('progress').style.width = '0%';
-  let complete = false;
+  let complete = false, dimensions = null, rows = 0;
   try {
     const response = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(scene), signal: controller.signal });
     if (!response.ok) { const body = await response.json(); throw new Error(body.error || 'Render request failed.'); }
@@ -133,8 +143,16 @@ async function render() {
         const message = JSON.parse(pending.slice(0, newline)); pending = pending.slice(newline + 1);
         if (message.error) throw new Error(message.error);
         if (message.progress !== undefined) { $('progress').style.width = `${message.progress}%`; $('status').textContent = `Tracing rays… ${message.progress}%`; }
-        if (message.pixels) {
-          await displayImage(message); complete = true;
+        if (message.type === 'start') {
+          if (dimensions) throw new Error('Unexpected render restart.');
+          dimensions = message;
+          startImage(message.width, message.height);
+        } else if (message.type === 'row') {
+          if (!dimensions || message.row !== rows || rows >= dimensions.height) throw new Error('Received an out-of-order image row.');
+          displayRow(message, dimensions.width); rows++;
+        } else if (message.type === 'done') {
+          if (!dimensions || rows !== dimensions.height) throw new Error('The image is incomplete.');
+          await finishImage(); complete = true;
           $('status').textContent = `Render complete · ${((performance.now() - start) / 1000).toFixed(1)}s`;
           $('details').textContent = revision === renderRevision ? 'A little light, a lot of rays. Your PNG is ready.' : 'Scene changed during rendering. Render again to see your latest edits.';
         }
@@ -145,7 +163,7 @@ async function render() {
     controller.abort();
     $('status').textContent = error.name === 'AbortError' ? 'Render cancelled' : 'Could not render';
     $('status').classList.toggle('error', error.name !== 'AbortError');
-    $('details').textContent = error.name === 'AbortError' ? 'Adjust your scene and try again whenever you’re ready.' : error.message;
+    $('details').textContent = error.name === 'AbortError' ? 'Partial preview kept. Downloads use the last completed render.' : error.message;
     $('progress').style.width = '0%';
   } finally { controller = null; $('render').disabled = false; $('cancel').hidden = true; }
 }

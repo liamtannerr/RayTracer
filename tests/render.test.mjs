@@ -35,8 +35,11 @@ test('actual C++ render returns complete RGB data and progress', async () => {
   const messages = (await response.text()).trim().split('\n').map(JSON.parse);
   assert.ok(messages.some(message => message.progress < 100));
   const result = messages.at(-1); assert.equal(result.error, undefined);
-  assert.equal(result.width, 160); assert.equal(result.height, 90);
-  const pixels = Buffer.from(result.pixels, 'base64'); assert.equal(pixels.length, 160 * 90 * 3);
+  assert.equal(result.type, 'done');
+  assert.equal(messages[0].width, 160); assert.equal(messages[0].height, 90);
+  const rows = messages.filter(message => message.type === 'row');
+  assert.deepEqual(rows.map(row => row.row), Array.from({ length: 90 }, (_, i) => i));
+  const pixels = Buffer.concat(rows.map(row => Buffer.from(row.pixels, 'base64'))); assert.equal(pixels.length, 160 * 90 * 3);
   assert.ok(new Set(pixels).size > 100, 'image should contain a range of shaded colors');
 });
 test('busy renderer rejects additional jobs and cancellation releases it', async () => {
@@ -45,6 +48,14 @@ test('busy renderer rejects additional jobs and cancellation releases it', async
   const controller = new AbortController();
   const response = await post(heavy, { signal: controller.signal });
   assert.equal(response.status, 200);
+  const reader = response.body.getReader();
+  let partial = '';
+  while (!partial.includes('"type":"row"')) {
+    const chunk = await reader.read();
+    assert.equal(chunk.done, false, 'a row should arrive while the render is running');
+    partial += new TextDecoder().decode(chunk.value);
+  }
+  assert.ok(!partial.includes('"type":"done"'), 'pixels should arrive before completion');
   assert.equal((await post(scene())).status, 429);
   controller.abort();
   let next;
@@ -63,7 +74,10 @@ test('high-detail render supports 720p at 128 samples without truncating the ima
   const messages = (await response.text()).trim().split('\n').map(JSON.parse);
   const result = messages.at(-1);
   assert.equal(result.error, undefined);
-  assert.equal(result.width, 1280);
-  assert.equal(result.height, 720);
-  assert.equal(Buffer.from(result.pixels, 'base64').length, 1280 * 720 * 3);
+  assert.equal(result.type, 'done');
+  assert.equal(messages[0].width, 1280);
+  assert.equal(messages[0].height, 720);
+  const rows = messages.filter(message => message.type === 'row');
+  assert.equal(rows.length, 720);
+  assert.ok(rows.every((row, index) => row.row === index && Buffer.from(row.pixels, 'base64').length === 1280 * 3));
 });

@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { PpmStream } from './ppm-stream.mjs';
 import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +10,7 @@ let active = null;
 function json(res, status, message) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: message })); }
 const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-transform');
   if (req.method === 'POST' && req.url === '/api/render') {
     // Reject cross-origin browser submissions; requests stay on this app's origin.
     if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(res, 403, 'Cross-origin renders are not allowed.');
@@ -24,28 +25,32 @@ const server = http.createServer(async (req, res) => {
     } catch (error) { return json(res, 400, error.message); }
     if (active) return json(res, 429, 'The renderer is busy. Please try again shortly.');
     res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'X-Accel-Buffering': 'no' });
-    const send = data => { if (!res.destroyed) res.write(JSON.stringify(data) + '\n'); };
+    const send = data => !res.destroyed && res.write(JSON.stringify(data) + '\n');
     const child = spawn(`${root}/build/web-render`, [], { stdio: ['pipe', 'pipe', 'pipe'] });
     active = child;
-    const chunks = [];
-    let size = 0, errorMessage = '', progressBuffer = '';
-    const timer = setTimeout(() => { errorMessage = 'Render reached the 2-minute limit. Try fewer samples or a smaller image.'; child.kill('SIGKILL'); }, LIMITS.timeoutMs);
-    res.on('close', () => { if (!res.writableEnded) child.kill('SIGKILL'); });
+    send({ type: 'start', width: scene.width, height: scene.height, progress: 0 });
+    let size = 0, errorMessage = '';
+    const parser = new PpmStream(scene.width, scene.height, (row, pixels) => {
+      if (!send({ type: 'row', row, pixels, progress: Math.floor((row + 1) / scene.height * 100) })) child.stdout.pause();
+    });
+    res.on('drain', () => child.stdout.resume());
+    const stop = message => {
+      errorMessage = message;
+      child.kill('SIGKILL');
+      // Drain a paused pipe so the child can close even if the client disconnected.
+      child.stdout.resume();
+    };
+    const timer = setTimeout(() => stop('Render reached the 5-minute limit. Try fewer samples or a smaller image.'), LIMITS.timeoutMs);
+    res.on('close', () => { if (!res.writableEnded) stop('Render cancelled.'); });
     child.stdout.on('data', chunk => {
       size += chunk.length;
-      if (size > scene.width * scene.height * 12 + 64) { errorMessage = 'Render output exceeded its limit.'; child.kill('SIGKILL'); }
-      else chunks.push(chunk);
-    });
-    child.stderr.on('data', chunk => {
-      progressBuffer += chunk.toString();
-      const matches = [...progressBuffer.matchAll(/Scanlines remaining: (\d+) /g)];
-      if (matches.length) {
-        const match = matches.at(-1);
-        send({ progress: Math.round((1 - Number(match[1]) / scene.height) * 100) });
-        progressBuffer = progressBuffer.slice(match.index + match[0].length);
+      if (size > scene.width * scene.height * 12 + 64) stop('Render output exceeded its limit.');
+      else if (!errorMessage) {
+        try { parser.push(chunk); }
+        catch (error) { stop(error.message); }
       }
-      if (progressBuffer.length > 1024) progressBuffer = progressBuffer.slice(-100);
     });
+    child.stderr.resume(); // Progress comes from rows actually sent to the browser.
     child.on('error', () => { errorMessage = 'Could not start the C++ renderer. Run npm run build and try again.'; });
     child.stdin.on('error', () => {}); // Process may exit before consuming input.
     child.on('close', code => {
@@ -54,9 +59,8 @@ const server = http.createServer(async (req, res) => {
       if (res.destroyed) return;
       if (code !== 0 || errorMessage) send({ error: errorMessage || 'The renderer exited unexpectedly.' });
       else {
-        const tokens = Buffer.concat(chunks).toString().trim().split(/\s+/);
-        if (tokens[0] !== 'P3' || Number(tokens[1]) !== scene.width || Number(tokens[2]) !== scene.height || tokens.length !== 4 + scene.width * scene.height * 3) send({ error: 'The renderer returned an incomplete image.' });
-        else send({ progress: 100, width: scene.width, height: scene.height, pixels: Buffer.from(tokens.slice(4).map(Number)).toString('base64') });
+        try { parser.finish(); send({ type: 'done', progress: 100 }); }
+        catch (error) { send({ error: error.message }); }
       }
       res.end();
     });
