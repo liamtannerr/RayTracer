@@ -20,7 +20,11 @@ selected preset.
 
 Add, select, and remove spheres; choose diffuse, metal, or glass; edit position,
 radius, color, roughness, and refraction. Adjust the camera position, target, and
-field of view, then click **Render scene**. The initial scene renders automatically at 640 × 360 with 16 samples (Balanced).
+field of view, then click **Render scene**. A bundled PNG of Candy shop appears
+immediately. The browser wakes the backend in the background without rendering;
+the editor stays usable while it connects. Clicking **Render scene** during startup
+shows a short message asking you to try again once the renderer is ready. No render
+is queued automatically. The default quality is 640 × 360 with 16 samples (Balanced).
 Completed rows appear live from top to bottom, and the progress bar tracks rows
 received. Cancel stops the rendering process and leaves the partial preview visible;
 **Download PNG** saves the last completed render, even after you edit the scene or
@@ -33,7 +37,8 @@ Scenes are kept in memory in the browser and reset on page reload.
 
 The web app runs the existing C++ materials, camera, and intersection code through
 `src/web_render.cc`. The original `src/main.cc` stays available for standalone use.
-The built-in Node server serves the frontend and a streaming `/api/render` endpoint.
+The built-in Node server provides `/api/health` and a streaming `/api/render`
+endpoint. It also serves the frontend locally; production can host the frontend separately.
 
 Server-enforced limits: 160–1280 pixels wide at 16:9, 4–128 samples per pixel,
 16 editable spheres plus the ground, 8 ray bounces, a 5-minute timeout, and one
@@ -52,12 +57,56 @@ refresh the browser after changing frontend files.
 
 ### Deployment
 
-This app needs a long-running Node server and the native renderer, so deploy it
-to a container host or VM. A static-only host cannot run the render API.
+#### Vercel frontend + Render backend
+
+Both deployments use this repository. Vercel serves only the static editor and
+placeholder PNG; Render runs the Node API and native C++ renderer.
+
+1. Keep (or create) the **Render Web Service** using the root `Dockerfile`. The
+   container defaults to API-only mode (`SERVE_FRONTEND=false`). Set its health
+   check path to `/api/health`.
+2. Import the repository into **Vercel**, with the repository root as Root
+   Directory and **Other** as the framework. The checked-in `vercel.json` runs
+   `npm run build:web` and publishes `dist`; it does not compile C++.
+3. In Vercel, set **`BACKEND_URL=https://your-service.onrender.com`** before
+   deploying. Use just the origin, without `/api` or other paths. This is a public
+   API address, not a secret. Changing it requires a new frontend deployment.
+4. In Render, set **`ALLOWED_ORIGINS=https://your-project.vercel.app`** and redeploy
+   the service. Use exact frontend origins without trailing slashes. Add a custom
+   domain or specific Vercel preview URLs as comma-separated entries if needed;
+   unrelated origins are rejected. Use the Vercel URL as the public site link.
+
+On arrival the frontend requests `/api/health` directly from Render. That HTTP
+request wakes a sleeping free service. Startup responses and connection failures
+are retried for up to two minutes; afterward the editor offers a retry through
+**Render scene**. Polling stops on success, so an open tab does not continually
+keep the service awake. After a minute without a health check, clicking Render
+checks the connection again; click again once ready. The saved preview stays
+visible until the user starts a render, including after the backend wakes.
+
+Render requests go directly to the API with an explicit CORS allowlist, preserving
+streaming and cancellation without a Vercel function or proxy timeout. The browser
+never navigates to Render's startup screen. See [Render's free-service behavior](https://render.com/docs/free)
+and [Vercel's project configuration](https://vercel.com/docs/project-configuration/vercel-json).
+
+To build the static frontend yourself:
+
+```sh
+BACKEND_URL=https://your-service.onrender.com npm run build:web
+```
+
+The default PNG was rendered from `createScene('candy')` using the project's C++
+renderer at 640 × 360 and 16 samples, then converted from PPM to PNG. It is an
+example only; downloads become available after the user completes a render.
+
+#### Single-container deployment (optional)
+
+Local `npm run dev` still serves both frontend and backend on one origin. To run
+that same arrangement in Docker, explicitly enable frontend serving:
 
 ```sh
 docker build -t ray-studio .
-docker run --rm -p 5173:5173 ray-studio
+docker run --rm -p 5173:5173 -e SERVE_FRONTEND=true ray-studio
 ```
 
 The Docker build compiles C++ in a separate stage; the runtime runs as an unprivileged
@@ -125,7 +174,6 @@ This repository contains a custom C++ ray tracer inspired by *Ray Tracing in One
 ## Future Plans
 
 * Add scene save/load and more geometry to the scene editor.
-* Host the back-end rendering service and front-end site on AWS free tier.
 
 ## Tools and Technologies
 
@@ -137,5 +185,3 @@ This repository contains a custom C++ ray tracer inspired by *Ray Tracing in One
 ## License
 
 This project is for educational and portfolio purposes only.
-
-

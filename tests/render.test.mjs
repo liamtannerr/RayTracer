@@ -6,7 +6,7 @@ import { serializeScene } from '../server/scene.mjs';
 const scene = () => ({ width: 160, samples: 4, ground: '#889977', camera: { from: [7, 3, 7], at: [0, 1, 0], fov: 40 }, spheres: ['diffuse', 'metal', 'glass'].map((material, i) => ({ position: [(i - 1) * 2.1, 1, 0], radius: 1, material, color: '#ddaa88', fuzz: 0.1, ior: 1.5 })) });
 let server, base;
 before(async () => {
-  server = spawn(process.execPath, ['server/index.mjs'], { env: { ...process.env, PORT: '0', HOST: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  server = spawn(process.execPath, ['server/index.mjs'], { env: { ...process.env, PORT: '0', HOST: '127.0.0.1', SERVE_FRONTEND: 'true', ALLOWED_ORIGINS: 'https://ray-studio.vercel.app, https://studio.example.com' }, stdio: ['ignore', 'pipe', 'pipe'] });
   base = await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Server failed to start')), 5000);
     server.stdout.on('data', data => { const match = data.toString().match(/http:\/\/[^\s]+/); if (match) { clearTimeout(timer); resolve(match[0]); } });
@@ -25,13 +25,37 @@ test('serves the editor and blocks unknown paths', async () => {
   const response = await fetch(base); assert.equal(response.status, 200); assert.match(await response.text(), /Ray Studio/);
   assert.equal((await fetch(`${base}/package.json`)).status, 404);
 });
+test('health and preflight support only configured frontend origins', async () => {
+  for (const origin of ['https://ray-studio.vercel.app', 'https://studio.example.com']) {
+    const health = await fetch(`${base}/api/health`, { headers: { origin } });
+    assert.equal(health.status, 200);
+    assert.deepEqual(await health.json(), { status: 'ok' });
+    assert.equal(health.headers.get('access-control-allow-origin'), origin);
+    assert.equal(health.headers.get('vary'), 'Origin');
+    assert.match(health.headers.get('cache-control'), /no-store/);
+    const preflight = await fetch(`${base}/api/render`, { method: 'OPTIONS', headers: { origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' } });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+    assert.match(preflight.headers.get('access-control-allow-methods'), /POST/);
+    assert.match(preflight.headers.get('access-control-allow-headers'), /Content-Type/i);
+  }
+  for (const method of ['GET', 'OPTIONS']) {
+    const denied = await fetch(`${base}/api/health`, { method, headers: { origin: 'https://ray-studio.vercel.app.evil.example' } });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.headers.get('access-control-allow-origin'), null);
+  }
+  const invalid = await post({}, { headers: { origin: 'https://ray-studio.vercel.app', 'content-type': 'application/json' } });
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.headers.get('access-control-allow-origin'), 'https://ray-studio.vercel.app');
+});
 test('API enforces limits and same-origin requests', async () => {
   assert.equal((await post({ ...scene(), width: 8000 })).status, 400);
   assert.equal((await post(scene(), { headers: { origin: 'https://example.com' } })).status, 403);
   assert.equal((await fetch(`${base}/api/render`, { method: 'POST', body: 'x'.repeat(17000) })).status, 413);
 });
-test('actual C++ render returns complete RGB data and progress', async () => {
-  const response = await post(scene()); assert.equal(response.status, 200);
+test('actual C++ render streams across an allowed frontend origin', async () => {
+  const response = await post(scene(), { headers: { origin: 'https://ray-studio.vercel.app', 'content-type': 'application/json' } }); assert.equal(response.status, 200);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'https://ray-studio.vercel.app');
   const messages = (await response.text()).trim().split('\n').map(JSON.parse);
   assert.ok(messages.some(message => message.progress < 100));
   const result = messages.at(-1); assert.equal(result.error, undefined);

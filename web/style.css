@@ -14,3 +14,6 @@
   .preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .starting-scenes .section-title { align-items: flex-start; flex-direction: column; gap: 7px; }
 }
+
+#placeholder { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.backend-status { min-height: 2.8em; margin: 10px 0 0; font-size: 11px; line-height: 1.4; color: var(--muted); }

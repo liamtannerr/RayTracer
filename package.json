@@ -6,6 +6,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:web": "node scripts/build-web.mjs",
     "dev": "npm run build && node --watch server/index.mjs",
     "start": "npm run build && node server/index.mjs",
     "test": "npm run build && node --test tests/*.test.mjs"

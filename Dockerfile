@@ -12,7 +12,7 @@ WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY server ./server
 COPY web ./web
-ENV HOST=0.0.0.0 PORT=5173 NODE_ENV=production
+ENV HOST=0.0.0.0 PORT=5173 NODE_ENV=production SERVE_FRONTEND=false
 USER node
 EXPOSE 5173
 CMD ["node", "server/index.mjs"]

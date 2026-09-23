@@ -1,5 +1,16 @@
 import { presets, createScene } from './presets.js';
+import { backendUrl } from './config.js';
+import { Backend } from './backend.js';
 const $ = id => document.getElementById(id);
+const backend = new Backend(backendUrl, state => {
+  const messages = {
+    warming: 'Waking up the renderer… You can edit your scene while it starts.',
+    ready: 'Renderer ready. Click Render scene whenever you’re ready.',
+    unavailable: 'The renderer is taking longer than expected. Click Render scene to try connecting again.'
+  };
+  $('backend-status').textContent = messages[state];
+  $('backend-status').classList.toggle('error', state === 'unavailable');
+});
 let activePreset = presets[0].id;
 let scene = createScene(activePreset), selected = 0, controller = null, imageUrl = null, revision = 0;
 function changed() {
@@ -100,6 +111,7 @@ function startImage(width, height) {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#101410'; ctx.fillRect(0, 0, width, height);
   $('empty').hidden = true; canvas.parentElement.classList.add('has-image');
+  $('placeholder').hidden = true;
   $('dimensions').textContent = `${width} × ${height}`;
   $('download').textContent = imageUrl ? '↓ Download previous PNG' : '↓ Download PNG';
 }
@@ -121,6 +133,11 @@ async function finishImage() {
 }
 async function render() {
   if (controller) return;
+  if (!backend.ready) {
+    void backend.wake();
+    $('backend-status').textContent = 'The renderer is waking up. This can take about a minute. Please click Render scene once it’s ready.';
+    return;
+  }
   const invalid = document.querySelector('input:invalid');
   if (invalid) { invalid.reportValidity(); return; }
   controller = new AbortController();
@@ -130,7 +147,11 @@ async function render() {
   $('details').textContent = 'You can keep editing while this scene renders.'; $('progress').style.width = '0%';
   let complete = false, dimensions = null, rows = 0;
   try {
-    const response = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(scene), signal: controller.signal });
+    const response = await fetch(`${backendUrl}/api/render`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(scene), signal: controller.signal, credentials: 'omit' });
+    if (response.status >= 500 || (response.ok && !response.headers.get('content-type')?.includes('application/x-ndjson'))) {
+      void backend.wake();
+      throw new Error('The renderer is reconnecting. Please try again once it’s ready.');
+    }
     if (!response.ok) { const body = await response.json(); throw new Error(body.error || 'Render request failed.'); }
     const reader = response.body.getReader(), decoder = new TextDecoder();
     let pending = '';
@@ -161,6 +182,7 @@ async function render() {
     if (!complete) throw new Error('Render connection closed before the image was complete. Please try again.');
   } catch (error) {
     controller.abort();
+    if (error instanceof TypeError) void backend.wake();
     $('status').textContent = error.name === 'AbortError' ? 'Render cancelled' : 'Could not render';
     $('status').classList.toggle('error', error.name !== 'AbortError');
     $('details').textContent = error.name === 'AbortError' ? 'Partial preview kept. Downloads use the last completed render.' : error.message;
@@ -168,4 +190,4 @@ async function render() {
   } finally { controller = null; $('render').disabled = false; $('cancel').hidden = true; }
 }
 setup();
-render();
+void backend.wake();

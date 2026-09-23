@@ -5,15 +5,33 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { serializeScene, LIMITS } from './scene.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/presets.js': ['presets.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
+const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/backend.js': ['backend.js', 'text/javascript'], '/config.js': ['config.js', 'text/javascript'], '/presets.js': ['presets.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/placeholder.png': ['placeholder.png', 'image/png'] };
+const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean));
 let active = null;
 function json(res, status, message) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: message })); }
 const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store, no-transform');
+  if (req.url === '/api/health' || req.url === '/api/render') {
+    const origin = req.headers.origin;
+    res.setHeader('Vary', 'Origin');
+    if (origin) {
+      const sameOrigin = origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`;
+      if (!sameOrigin && !allowedOrigins.has(origin)) return json(res, 403, 'This frontend origin is not allowed.');
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, { 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
+      res.end();
+      return;
+    }
+  }
+  if (req.method === 'GET' && req.url === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
   if (req.method === 'POST' && req.url === '/api/render') {
-    // Reject cross-origin browser submissions; requests stay on this app's origin.
-    if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(res, 403, 'Cross-origin renders are not allowed.');
     let scene;
     try {
       let body = '';
@@ -67,7 +85,7 @@ const server = http.createServer(async (req, res) => {
     child.stdin.end(scene.input);
     return;
   }
-  if (req.method === 'GET' && assets[req.url]) {
+  if (process.env.SERVE_FRONTEND !== 'false' && req.method === 'GET' && assets[req.url]) {
     const [file, type] = assets[req.url];
     try { res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8` }); res.end(await readFile(`${root}/web/${file}`)); }
     catch { res.end('Unable to load application.'); }

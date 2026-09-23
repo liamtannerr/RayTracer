@@ -1,6 +1,7 @@
 .git
 node_modules
 build
+dist
 Images
 *.ppm
 src/*.ppm
