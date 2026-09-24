@@ -3,7 +3,7 @@ import { PpmStream } from './ppm-stream.mjs';
 import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { serializeScene, LIMITS } from './scene.mjs';
+import { serializeScene } from './scene.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/backend.js': ['backend.js', 'text/javascript'], '/config.js': ['config.js', 'text/javascript'], '/presets.js': ['presets.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/placeholder.png': ['placeholder.png', 'image/png'] };
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean));
@@ -58,7 +58,6 @@ const server = http.createServer(async (req, res) => {
       // Drain a paused pipe so the child can close even if the client disconnected.
       child.stdout.resume();
     };
-    const timer = setTimeout(() => stop('Render reached the 5-minute limit. Try fewer samples or a smaller image.'), LIMITS.timeoutMs);
     res.on('close', () => { if (!res.writableEnded) stop('Render cancelled.'); });
     child.stdout.on('data', chunk => {
       size += chunk.length;
@@ -72,7 +71,6 @@ const server = http.createServer(async (req, res) => {
     child.on('error', () => { errorMessage = 'Could not start the C++ renderer. Run npm run build and try again.'; });
     child.stdin.on('error', () => {}); // Process may exit before consuming input.
     child.on('close', code => {
-      clearTimeout(timer);
       active = null;
       if (res.destroyed) return;
       if (code !== 0 || errorMessage) send({ error: errorMessage || 'The renderer exited unexpectedly.' });
@@ -93,6 +91,7 @@ const server = http.createServer(async (req, res) => {
   }
   json(res, 404, 'Not found.');
 });
+// Limit request uploads, not the duration of the streamed render response.
 server.requestTimeout = 10000;
 const host = process.env.HOST || '127.0.0.1';
 let port = Number(process.env.PORT || 5173);

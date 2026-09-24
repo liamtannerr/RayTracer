@@ -30,8 +30,8 @@ received. Cancel stops the rendering process and leaves the partial preview visi
 **Download PNG** saves the last completed render, even after you edit the scene or
 cancel a new render. During a new render, the link is labeled **Download previous PNG**.
 For sharper results on a faster server or locally, select **1280 × 720 · High detail**
-and **128 · Ultra smooth**. On free hosting, increase quality gradually; high-detail
-renders may reach the 5-minute timeout.
+and **128 · Ultra smooth**. Higher settings take longer to render. The application
+does not impose a render time limit; keep the page open until rendering completes.
 This provides four times the pixels and four times the samples of the previous maximum.
 Scenes are kept in memory in the browser and reset on page reload.
 
@@ -41,7 +41,7 @@ The built-in Node server provides `/api/health` and a streaming `/api/render`
 endpoint. It also serves the frontend locally; production can host the frontend separately.
 
 Server-enforced limits: 160–1280 pixels wide at 16:9, 4–128 samples per pixel,
-16 editable spheres plus the ground, 8 ray bounces, a 5-minute timeout, and one
+16 editable spheres plus the ground, 8 ray bounces, and one
 active render per server process. Requests also have a 16 KB size limit. A busy
 server asks the next user to retry. These limits bound each job; a public deployment
 should also apply per-client rate limiting at its proxy or hosting layer.
@@ -111,7 +111,8 @@ docker run --rm -p 5173:5173 -e SERVE_FRONTEND=true ray-studio
 
 The Docker build compiles C++ in a separate stage; the runtime runs as an unprivileged
 user. Point your HTTPS proxy at port 5173, preserve the request Host header, disable
-response buffering for `/api/render`, and allow at least 305 seconds for responses.
+response buffering for `/api/render`, and configure the proxy to allow long-running
+streamed responses without a fixed response-duration limit.
 No generated images or scenes are stored on the server.
 
 ## Overview
