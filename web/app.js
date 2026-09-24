@@ -35,13 +35,10 @@ function vectorEditor(container, values, label) {
   container.replaceChildren();
   values.forEach((value, index) => {
     const wrapper = document.createElement('label');
-    const direction = ['In/Out', 'Up/Down', 'Left/Right'][index];
-    const caption = document.createElement('span');
-    caption.className = 'axis-caption'; caption.textContent = direction;
     const field = document.createElement('div'); field.className = 'axis-field';
     const axis = document.createElement('span'); axis.className = 'axis-letter'; axis.textContent = 'XYZ'[index];
-    field.append(axis, numberInput(value, -30, 30, 0.1, `${label} ${'XYZ'[index]} (${direction})`, n => values[index] = n));
-    wrapper.append(caption, field);
+    field.append(axis, numberInput(value, -30, 30, 0.1, `${label} ${'XYZ'[index]}`, n => values[index] = n));
+    wrapper.append(field);
     container.append(wrapper);
   });
 }
