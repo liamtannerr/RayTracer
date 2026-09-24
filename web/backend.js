@@ -1,5 +1,6 @@
 export class Backend {
-  constructor(baseUrl, onChange, { fetcher = fetch, timeoutMs = 10000, retryMs = 3000, attempts = 40, maxWaitMs = 120000, now = Date.now } = {}) {
+  // Keep native fetch's global receiver; calling it as this.fetcher breaks in browsers.
+  constructor(baseUrl, onChange, { fetcher = (...args) => fetch(...args), timeoutMs = 10000, retryMs = 3000, attempts = 40, maxWaitMs = 120000, now = Date.now } = {}) {
     Object.assign(this, { baseUrl, onChange, fetcher, timeoutMs, retryMs, attempts, maxWaitMs, now });
     this.state = 'idle';
     this.checkedAt = -Infinity;

@@ -3,6 +3,22 @@ import assert from 'node:assert/strict';
 import { Backend } from '../web/backend.js';
 
 const healthy = () => Response.json({ status: 'ok' });
+test('the default fetcher preserves the native browser fetch receiver', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = function () {
+    calls++;
+    if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+    return Promise.resolve(healthy());
+  };
+  try {
+    const backend = new Backend('https://renderer.example', () => {}, { attempts: 1 });
+    assert.equal(await backend.wake(), true);
+    assert.equal(backend.ready, true);
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test('wake retries cold-start HTML and network errors, shares a pending check, and stops once healthy', async () => {
   const states = [], requests = [];
   const backend = new Backend('https://renderer.example', state => states.push(state), {
