@@ -73,7 +73,14 @@ class camera {
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
         w = unit_vector(lookfrom - lookat);
-        u = unit_vector(cross(vup, w));
+        auto right = cross(vup, w);
+        if (right.near_zero()) {
+            // Looking along the up axis needs a different reference to avoid a zero basis.
+            // For a top-down view, keep +X to the right and -Z toward the top.
+            auto alternate_up = std::fabs(w.z()) < 0.9 ? vec3(0,0,-1) : vec3(1,0,0);
+            right = cross(alternate_up, w);
+        }
+        u = unit_vector(right);
         v = cross(w, u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.

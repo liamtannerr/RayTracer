@@ -17,7 +17,7 @@ before(async () => {
 after(async () => { if (server && server.exitCode === null) { const exited = once(server, 'exit'); server.kill(); await exited; } });
 const post = (body, options = {}) => fetch(`${base}/api/render`, { method: 'POST', body: JSON.stringify(body), ...options });
 test('rejects expensive and malformed scenes before rendering', () => {
-  for (const patch of [{ width: 4000 }, { samples: 500 }, { spheres: Array(17).fill(scene().spheres[0]) }, { ground: 'red' }, { camera: { from: [0, 3, 0], at: [0, 0, 0], fov: 40 } }]) assert.throws(() => serializeScene({ ...scene(), ...patch }));
+  for (const patch of [{ width: 4000 }, { samples: 500 }, { spheres: Array(17).fill(scene().spheres[0]) }, { ground: 'red' }, { camera: { from: [0, 3, 0], at: [0, 3, 0], fov: 40 } }]) assert.throws(() => serializeScene({ ...scene(), ...patch }));
   const bad = scene(); bad.spheres[0].radius = -1; assert.throws(() => serializeScene(bad));
   bad.spheres[0].radius = 1; bad.spheres[0].position[0] = NaN; assert.throws(() => serializeScene(bad));
 });
@@ -65,6 +65,32 @@ test('actual C++ render streams across an allowed frontend origin', async () => 
   assert.deepEqual(rows.map(row => row.row), Array.from({ length: 90 }, (_, i) => i));
   const pixels = Buffer.concat(rows.map(row => Buffer.from(row.pixels, 'base64'))); assert.equal(pixels.length, 160 * 90 * 3);
   assert.ok(new Set(pixels).size > 100, 'image should contain a range of shaded colors');
+});
+test('vertical and near-vertical cameras render complete, nondegenerate images', async () => {
+  const views = [
+    { from: [0, 10, 0], at: [0, 1, 0], fov: 38 },
+    { from: [0, 0.5, 0], at: [0, 8, 0], fov: 38 },
+    { from: [1e-10, 10, 0], at: [0, 1, 0], fov: 38 }
+  ];
+  for (const camera of views) {
+    const body = { ...scene(), camera, spheres: [{ ...scene().spheres[0], position: camera.at, color: '#ff2222' }] };
+    const response = await post(body);
+    assert.equal(response.status, 200);
+    const messages = (await response.text()).trim().split('\n').map(JSON.parse);
+    assert.equal(messages.at(-1).type, 'done');
+    const rows = messages.filter(message => message.type === 'row');
+    assert.deepEqual(rows.map(row => row.row), Array.from({ length: 90 }, (_, i) => i));
+    const pixels = Buffer.concat(rows.map(row => Buffer.from(row.pixels, 'base64')));
+    assert.equal(pixels.length, 160 * 90 * 3);
+    assert.ok(new Set(pixels).size > 32, 'the image must contain shaded colors, not a collapsed camera frame');
+    const center = (45 * 160 + 80) * 3;
+    assert.ok(pixels[center] > pixels[center + 1] * 2, 'the red sphere at the camera target must be visible in the center');
+  }
+});
+test('coincident camera position and target are rejected with a useful error', async () => {
+  const response = await post({ ...scene(), camera: { from: [0, 1, 0], at: [0, 1, 0], fov: 38 } });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /viewing direction/);
 });
 test('busy renderer rejects additional jobs and cancellation releases it', async () => {
   const heavy = scene(); heavy.width = 640; heavy.samples = 32;

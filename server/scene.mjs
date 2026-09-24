@@ -20,7 +20,7 @@ export function serializeScene(scene) {
   if (!camera) throw new Error('A camera is required.');
   const from = vector(camera.from, 'Camera position');
   const at = vector(camera.at, 'Camera target');
-  if (Math.hypot(from[0] - at[0], from[2] - at[2]) < 0.01) throw new Error('Move the camera away from its target horizontally.');
+  if (Math.hypot(from[0] - at[0], from[1] - at[1], from[2] - at[2]) < 0.01) throw new Error('Move the camera away from its target so it has a viewing direction.');
   const height = width * 9 / 16;
   const lines = [[width, height, samples, ...from, ...at, number(camera.fov, 15, 90, 'Field of view'), ...color(scene.ground), spheres.length].join(' ')];
   for (const sphere of spheres) {
