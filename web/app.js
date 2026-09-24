@@ -2,15 +2,19 @@ import { presets, createScene } from './presets.js';
 import { backendUrl } from './config.js';
 import { Backend } from './backend.js';
 const $ = id => document.getElementById(id);
-const backend = new Backend(backendUrl, state => {
+function showBackendStatus(state, clicked = false) {
   const messages = {
-    warming: 'Waking up the renderer… You can edit your scene while it starts.',
-    ready: 'Renderer ready. Click Render scene whenever you’re ready.',
-    unavailable: 'The renderer is taking longer than expected. Click Render scene to try connecting again.'
+    warming: ['Renderer is waking up', clicked
+      ? 'Please wait until it’s ready, then click Render scene again. Startup can take about a minute.'
+      : 'This can take about a minute. You can keep editing while you wait.'],
+    ready: ['Renderer ready', 'Click Render scene whenever you’re ready.'],
+    unavailable: ['Still waiting for the renderer', 'It’s taking longer than expected. Click Render scene to try connecting again.']
   };
-  $('backend-status').textContent = messages[state];
-  $('backend-status').classList.toggle('error', state === 'unavailable');
-});
+  $('backend-status').dataset.state = state;
+  $('backend-title').textContent = messages[state][0];
+  $('backend-message').textContent = messages[state][1];
+}
+const backend = new Backend(backendUrl, state => showBackendStatus(state));
 let activePreset = presets[0].id;
 let scene = createScene(activePreset), selected = 0, controller = null, imageUrl = null, revision = 0;
 function changed() {
@@ -135,7 +139,7 @@ async function render() {
   if (controller) return;
   if (!backend.ready) {
     void backend.wake();
-    $('backend-status').textContent = 'The renderer is waking up. This can take about a minute. Please click Render scene once it’s ready.';
+    showBackendStatus('warming', true);
     return;
   }
   const invalid = document.querySelector('input:invalid');
