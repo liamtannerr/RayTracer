@@ -7,7 +7,7 @@ function showBackendStatus(state, clicked = false) {
     warming: ['Renderer is waking up', clicked
       ? 'Please wait until it’s ready, then click Render scene again. Startup can take about a minute.'
       : 'This can take about a minute. You can keep editing while you wait.'],
-    ready: ['Renderer ready', 'Click Render scene whenever you’re ready.'],
+    ready: ['Ready to Render'],
     unavailable: ['Still waiting for the renderer', 'It’s taking longer than expected. Click Render scene to try connecting again.']
   };
   $('backend-status').dataset.state = state;
